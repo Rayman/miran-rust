@@ -39,12 +39,20 @@ impl fmt::Display for Attack {
     }
 }
 
-struct BattleResult {
+struct BattleResult<'a> {
+    attacker: &'a dyn TotalStats,
+    defender: &'a dyn TotalStats,
     history: Vec<Attack>,
 }
 
-impl fmt::Display for BattleResult {
+impl fmt::Display for BattleResult<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(
+            f,
+            "Battle between {} and {}",
+            self.attacker.name(),
+            self.defender.name()
+        )?;
         for attack in self.history.iter() {
             writeln!(f, "{}", attack)?;
         }
@@ -52,8 +60,10 @@ impl fmt::Display for BattleResult {
     }
 }
 
-fn battle(attacker: &dyn TotalStats, defender: &dyn TotalStats) -> BattleResult {
+fn battle<'a>(attacker: &'a dyn TotalStats, defender: &'a dyn TotalStats) -> BattleResult<'a> {
     BattleResult {
+        attacker: attacker,
+        defender: defender,
         history: vec![Attack {}, Attack {}],
     }
 }
@@ -65,14 +75,17 @@ fn main() {
     // let deserialized: Point = serde_json::from_str(&serialized).unwrap();
     // println!("deserialized = {:?}", deserialized);
 
-    let m = Monster {
-        name: "monster".to_string(),
-    };
     let p = Player {
         name: "player".to_string(),
     };
-    println!("Monster = {:?}", m);
+
+    let m = Monster {
+        name: "monster".to_string(),
+    };
+
     println!("Player = {:?}", p);
-    let result = battle(&m, &p);
+    println!("Monster = {:?}", m);
+
+    let result = battle(&p, &m);
     println!("{}", result)
 }
