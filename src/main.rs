@@ -6,22 +6,22 @@ trait TotalStats {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Monster {
-    name: String,
+struct Monster<'a> {
+    name: &'a str,
 }
 
-impl TotalStats for Monster {
+impl TotalStats for Monster<'_> {
     fn name(&self) -> &str {
         &self.name
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Player {
-    name: String,
+struct Player<'a> {
+    name: &'a str,
 }
 
-impl TotalStats for Player {
+impl TotalStats for Player<'_> {
     fn name(&self) -> &str {
         &self.name
     }
@@ -75,13 +75,9 @@ fn main() {
     // let deserialized: Point = serde_json::from_str(&serialized).unwrap();
     // println!("deserialized = {:?}", deserialized);
 
-    let p = Player {
-        name: "player".to_string(),
-    };
+    let p = Player { name: "player" };
 
-    let m = Monster {
-        name: "monster".to_string(),
-    };
+    let m = Monster { name: "monster" };
 
     println!("Player = {:?}", p);
     println!("Monster = {:?}", m);
