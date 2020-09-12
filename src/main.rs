@@ -30,7 +30,7 @@ impl TotalStats for Player {
 struct Attack {}
 
 impl fmt::Display for Attack {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{} attacked {} for {} damage ({} left)",
@@ -44,7 +44,7 @@ struct BattleResult {
 }
 
 impl fmt::Display for BattleResult {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for attack in self.history.iter() {
             writeln!(f, "{}", attack)?;
         }
