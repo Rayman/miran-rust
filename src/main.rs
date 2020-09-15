@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::fs::File;
 
 struct Stats {
     hp: f64,
@@ -139,15 +138,8 @@ fn battle<'a>(attacker: &'a dyn Character, defender: &'a dyn Character) -> Battl
     }
 }
 
-fn main() -> Result<(), serde_json::Error> {
-    // let point = Point { x: 1, y: 2 };
-    // let serialized = serde_json::to_string(&point).unwrap();
-    // println!("serialized = {}", serialized);
-    // let deserialized: Point = serde_json::from_str(&serialized).unwrap();
-    // println!("deserialized = {:?}", deserialized);
-
+fn main() {
     let p = Player { name: "player" };
-
     let m = Monster { name: "monster" };
 
     println!("Player = {:?}", p);
@@ -155,6 +147,4 @@ fn main() -> Result<(), serde_json::Error> {
 
     let result = battle(&p, &m);
     println!("{}", result);
-
-    serde_json::to_writer(&File::create("m.json").unwrap(), &m)
 }
