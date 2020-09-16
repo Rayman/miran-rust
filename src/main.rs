@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
 use std::fmt;
 
-struct Stats {
+#[derive(Clone)]
+struct Stats<'a> {
+    character: &'a dyn Character,
     hp: f64,
     damage: f64,
     attack_speed: f64,
@@ -12,7 +13,7 @@ trait Character {
     fn stats(&self) -> Stats;
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 struct Monster<'a> {
     name: &'a str,
 }
@@ -23,6 +24,7 @@ impl Character for Monster<'_> {
     }
     fn stats(&self) -> Stats {
         Stats {
+            character: self,
             hp: 100.,
             damage: 10.,
             attack_speed: 1.,
@@ -30,7 +32,7 @@ impl Character for Monster<'_> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 struct Player<'a> {
     name: &'a str,
 }
@@ -41,6 +43,7 @@ impl Character for Player<'_> {
     }
     fn stats(&self) -> Stats {
         Stats {
+            character: self,
             hp: 150.,
             damage: 5.,
             attack_speed: 1.2,
@@ -53,6 +56,7 @@ struct Attack<'a> {
     defender: &'a dyn Character,
     damage: f64,
     hp_left: f64,
+    attack_speed: f64,
 }
 
 impl fmt::Display for Attack<'_> {
@@ -89,17 +93,16 @@ impl fmt::Display for BattleResult<'_> {
     }
 }
 
-// fn do_attack(attacker_stats: &Stats, defender_stats: &Stats) -> Attack {
-//     let damage = attacker_stats.damage;
-//     defender_stats.hp -= damage;
-//     Attack {
-//         attacker: attacker,
-//         defender: defender,
-//         damage,
-//         hp_left: defender_stats.hp,
-//         swing_speed: attacker_stats.attack_speed,
-//     }
-// }
+fn calculate_attack<'a>(attacker: Stats<'a>, defender: Stats<'a>) -> Attack<'a> {
+    let damage = attacker.damage;
+    Attack {
+        attacker: attacker.character,
+        defender: defender.character,
+        damage,
+        hp_left: defender.hp - damage,
+        attack_speed: attacker.attack_speed,
+    }
+}
 
 fn battle<'a>(attacker: &'a dyn Character, defender: &'a dyn Character) -> BattleResult<'a> {
     let mut attacker_stats = attacker.stats();
@@ -109,32 +112,22 @@ fn battle<'a>(attacker: &'a dyn Character, defender: &'a dyn Character) -> Battl
     let mut history: Vec<Attack> = vec![];
     while attacker_stats.hp > 0. && defender_stats.hp > 0. {
         if time > 0. {
-            let damage = attacker_stats.damage;
-            defender_stats.hp -= damage;
-            history.push(Attack {
-                attacker: attacker,
-                defender: defender,
-                damage,
-                hp_left: defender_stats.hp,
-            });
-            time -= attacker_stats.attack_speed;
+            let attack = calculate_attack(attacker_stats.clone(), defender_stats.clone());
+            defender_stats.hp = attack.hp_left;
+            time -= attack.attack_speed;
+            history.push(attack);
         } else {
-            let damage = defender_stats.damage;
-            attacker_stats.hp -= damage;
-            history.push(Attack {
-                attacker: defender,
-                defender: attacker,
-                damage,
-                hp_left: attacker_stats.hp,
-            });
-            time += defender_stats.attack_speed;
+            let attack = calculate_attack(defender_stats.clone(), attacker_stats.clone());
+            attacker_stats.hp = attack.hp_left;
+            time += attack.attack_speed;
+            history.push(attack);
         }
     }
 
     BattleResult {
         attacker: attacker,
         defender: defender,
-        history: history,
+        history,
     }
 }
 
