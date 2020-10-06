@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use std::fmt;
 
 #[derive(Clone)]
@@ -104,12 +106,55 @@ fn calculate_attack<'a>(attacker: Stats<'a>, defender: Stats<'a>) -> Attack<'a> 
     }
 }
 
+enum Event<'a> {
+    Cooldown(&'a dyn Character),
+}
+
+struct HeapItem<'a> {
+    priority: f64, // NaN values are not allowed
+    event: Event<'a>,
+}
+
+impl Ord for HeapItem<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let ord = self.partial_cmp(other).unwrap();
+        match ord {
+            Ordering::Greater => Ordering::Less,
+            Ordering::Less => Ordering::Greater,
+            Ordering::Equal => ord,
+        }
+    }
+}
+
+impl PartialOrd for HeapItem<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for HeapItem<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.priority == other.priority
+    }
+}
+
+impl Eq for HeapItem<'_> {}
+
 fn battle<'a>(attacker: &'a dyn Character, defender: &'a dyn Character) -> BattleResult<'a> {
     let mut attacker_stats = attacker.stats();
     let mut defender_stats = defender.stats();
 
     let mut time = 0.;
     let mut history: Vec<Attack> = vec![];
+
+    let e = HeapItem {
+        priority: 3.,
+        event: Event::Cooldown(attacker),
+    };
+
+    let mut heap = BinaryHeap::new();
+    heap.push(e);
+
     while attacker_stats.hp > 0. && defender_stats.hp > 0. {
         if time > 0. {
             let attack = calculate_attack(attacker_stats.clone(), defender_stats.clone());
